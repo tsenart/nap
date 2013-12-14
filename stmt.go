@@ -4,7 +4,7 @@ import (
 	"database/sql"
 )
 
-// Stmt is a an aggregate prepared statement.
+// Stmt is an aggregate prepared statement.
 // It holds a prepared statement for each underlying physical db.
 type Stmt struct {
 	*DB
