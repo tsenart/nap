@@ -15,18 +15,24 @@ type DB struct {
 	count uint64    // Monotonically incrementing counter on each query
 }
 
-// Open constructs a DB struct by splitting dataSourceNames into multiple
-// connection strings (separated by ';').
-// For each connection string it creates a *sql.DB or returns an error if it fails.
-// The first connection string is assumed to be the master
-// while the rest are used for the slaves.
+// Open concurrently opens each underlying physical db.
+// dataSourceNames must be a semi-comma separated list of DSNs with the first
+// one being used as the master and the rest as slaves.
 func Open(driverName, dataSourceNames string) (*DB, error) {
 	conns := strings.Split(dataSourceNames, ";")
 	db := &DB{pdbs: make([]*sql.DB, len(conns))}
+	errors := make(chan error, len(db.pdbs))
 
-	var err error
-	for i, conn := range conns {
-		if db.pdbs[i], err = sql.Open(driverName, conn); err != nil {
+	for i := range db.pdbs {
+		go func(i int) {
+			var err error
+			db.pdbs[i], err = sql.Open(driverName, conns[i])
+			errors <- err
+		}(i)
+	}
+
+	for i := 0; i < cap(errors); i++ {
+		if err := <-errors; err != nil {
 			return nil, err
 		}
 	}
