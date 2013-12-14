@@ -106,7 +106,7 @@ func (db *DB) Prepare(query string) (*Stmt, error) {
 		}
 	}
 
-	return &Stmt{DB: db, stmts: stmts}, nil
+	return &Stmt{db: db, stmts: stmts}, nil
 }
 
 // Query executes a query that returns rows, typically a SELECT.
