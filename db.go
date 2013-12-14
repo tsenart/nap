@@ -142,9 +142,9 @@ func (db *DB) SetMaxIdleConns(n int) {
 // the new MaxOpenConns limit. If n <= 0, then there is no limit on the number
 // of open connections. The default is 0 (unlimited).
 func (db *DB) SetMaxOpenConns(n int) {
-  for i := range db.pdbs {
-    db.pdbs[i].SetMaxOpenConns(n)
-  }
+	for i := range db.pdbs {
+		db.pdbs[i].SetMaxOpenConns(n)
+	}
 }
 
 // Slave returns one of the physical databases which is a slave
