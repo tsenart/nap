@@ -6,14 +6,21 @@ import (
 
 // Stmt is an aggregate prepared statement.
 // It holds a prepared statement for each underlying physical db.
-type Stmt struct {
+type Stmt interface {
+	Close() error
+	Exec(...interface{}) (sql.Result, error)
+	Query(...interface{}) (*sql.Rows, error)
+	QueryRow(...interface{}) *sql.Row
+}
+
+type stmt struct {
 	db    *DB
 	stmts []*sql.Stmt
 }
 
 // Close closes the statement by concurrently closing all underlying
 // statements concurrently, returning the first non nil error.
-func (s *Stmt) Close() error {
+func (s *stmt) Close() error {
 	errors := make(chan error, len(s.stmts))
 
 	for i := range s.stmts {
@@ -32,14 +39,14 @@ func (s *Stmt) Close() error {
 // Exec executes a prepared statement with the given arguments
 // and returns a Result summarizing the effect of the statement.
 // Exec uses the master as the underlying physical db.
-func (s *Stmt) Exec(args ...interface{}) (sql.Result, error) {
+func (s *stmt) Exec(args ...interface{}) (sql.Result, error) {
 	return s.stmts[0].Exec(args...)
 }
 
 // Query executes a prepared query statement with the given
 // arguments and returns the query results as a *sql.Rows.
 // Query uses a slave as the underlying physical db.
-func (s *Stmt) Query(args ...interface{}) (*sql.Rows, error) {
+func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
 	return s.stmts[s.db.slave(len(s.db.pdbs))].Query(args...)
 }
 
@@ -49,6 +56,6 @@ func (s *Stmt) Query(args ...interface{}) (*sql.Rows, error) {
 // If the query selects no rows, the *Row's Scan will return ErrNoRows.
 // Otherwise, the *sql.Row's Scan scans the first selected row and discards the rest.
 // QueryRow uses a slave as the underlying physical db.
-func (s *Stmt) QueryRow(args ...interface{}) *sql.Row {
+func (s *stmt) QueryRow(args ...interface{}) *sql.Row {
 	return s.stmts[s.db.slave(len(s.db.pdbs))].QueryRow(args...)
 }
