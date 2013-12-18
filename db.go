@@ -31,10 +31,14 @@ func Open(driverName, dataSourceNames string) (*DB, error) {
 		}(i)
 	}
 
+	var err, innerErr error
 	for i := 0; i < cap(errors); i++ {
-		if err := <-errors; err != nil {
-			return nil, err
+		if innerErr = <-errors; innerErr != nil {
+			err = innerErr
 		}
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return db, nil
@@ -48,13 +52,14 @@ func (db *DB) Close() error {
 		go func(i int) { errors <- db.pdbs[i].Close() }(i)
 	}
 
+	var err, innerErr error
 	for i := 0; i < cap(errors); i++ {
-		if err := <-errors; err != nil {
-			return err
+		if innerErr = <-errors; innerErr != nil {
+			err = innerErr
 		}
 	}
 
-	return nil
+	return err
 }
 
 // Driver returns the physical database's underlying driver.
@@ -83,13 +88,14 @@ func (db *DB) Ping() error {
 		go func(i int) { errors <- db.pdbs[i].Ping() }(i)
 	}
 
+	var err, innerErr error
 	for i := 0; i < cap(errors); i++ {
-		if err := <-errors; err != nil {
-			return err
+		if innerErr = <-errors; innerErr != nil {
+			err = innerErr
 		}
 	}
 
-	return nil
+	return err
 }
 
 // Prepare creates a prepared statement for later queries or executions
@@ -106,10 +112,14 @@ func (db *DB) Prepare(query string) (Stmt, error) {
 		}(i)
 	}
 
+	var err, innerErr error
 	for i := 0; i < cap(errors); i++ {
-		if err := <-errors; err != nil {
-			return nil, err
+		if innerErr = <-errors; innerErr != nil {
+			err = innerErr
 		}
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return &stmt{db: db, stmts: stmts}, nil

@@ -27,13 +27,14 @@ func (s *stmt) Close() error {
 		go func(i int) { errors <- s.stmts[i].Close() }(i)
 	}
 
+	var err, innerErr error
 	for i := 0; i < cap(errors); i++ {
-		if err := <-errors; err != nil {
-			return err
+		if innerErr = <-errors; innerErr != nil {
+			err = innerErr
 		}
 	}
 
-	return nil
+	return err
 }
 
 // Exec executes a prepared statement with the given arguments
