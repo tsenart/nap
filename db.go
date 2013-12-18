@@ -21,22 +21,12 @@ type DB struct {
 func Open(driverName, dataSourceNames string) (*DB, error) {
 	conns := strings.Split(dataSourceNames, ";")
 	db := &DB{pdbs: make([]*sql.DB, len(conns))}
-	errors := make(chan error, len(db.pdbs))
 
-	for i := range db.pdbs {
-		go func(i int) {
-			var err error
-			db.pdbs[i], err = sql.Open(driverName, conns[i])
-			errors <- err
-		}(i)
-	}
+	err := scatter(len(db.pdbs), func(i int) (err error) {
+		db.pdbs[i], err = sql.Open(driverName, conns[i])
+		return err
+	})
 
-	var err, innerErr error
-	for i := 0; i < cap(errors); i++ {
-		if innerErr = <-errors; innerErr != nil {
-			err = innerErr
-		}
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -46,20 +36,9 @@ func Open(driverName, dataSourceNames string) (*DB, error) {
 
 // Close closes all physical databases concurrently, releasing any open resources.
 func (db *DB) Close() error {
-	errors := make(chan error, len(db.pdbs))
-
-	for i := range db.pdbs {
-		go func(i int) { errors <- db.pdbs[i].Close() }(i)
-	}
-
-	var err, innerErr error
-	for i := 0; i < cap(errors); i++ {
-		if innerErr = <-errors; innerErr != nil {
-			err = innerErr
-		}
-	}
-
-	return err
+	return scatter(len(db.pdbs), func(i int) error {
+		return db.pdbs[i].Close()
+	})
 }
 
 // Driver returns the physical database's underlying driver.
@@ -82,42 +61,21 @@ func (db *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
 // Ping verifies if a connection to each physical database is still alive,
 // establishing a connection if necessary.
 func (db *DB) Ping() error {
-	errors := make(chan error, len(db.pdbs))
-
-	for i := range db.pdbs {
-		go func(i int) { errors <- db.pdbs[i].Ping() }(i)
-	}
-
-	var err, innerErr error
-	for i := 0; i < cap(errors); i++ {
-		if innerErr = <-errors; innerErr != nil {
-			err = innerErr
-		}
-	}
-
-	return err
+	return scatter(len(db.pdbs), func(i int) error {
+		return db.pdbs[i].Ping()
+	})
 }
 
 // Prepare creates a prepared statement for later queries or executions
 // on each physical database, concurrently.
 func (db *DB) Prepare(query string) (Stmt, error) {
 	stmts := make([]*sql.Stmt, len(db.pdbs))
-	errors := make(chan error, len(db.pdbs))
 
-	for i := range db.pdbs {
-		go func(i int) {
-			var err error
-			stmts[i], err = db.pdbs[i].Prepare(query)
-			errors <- err
-		}(i)
-	}
+	err := scatter(len(db.pdbs), func(i int) (err error) {
+		stmts[i], err = db.pdbs[i].Prepare(query)
+		return err
+	})
 
-	var err, innerErr error
-	for i := 0; i < cap(errors); i++ {
-		if innerErr = <-errors; innerErr != nil {
-			err = innerErr
-		}
-	}
 	if err != nil {
 		return nil, err
 	}

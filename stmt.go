@@ -21,20 +21,9 @@ type stmt struct {
 // Close closes the statement by concurrently closing all underlying
 // statements concurrently, returning the first non nil error.
 func (s *stmt) Close() error {
-	errors := make(chan error, len(s.stmts))
-
-	for i := range s.stmts {
-		go func(i int) { errors <- s.stmts[i].Close() }(i)
-	}
-
-	var err, innerErr error
-	for i := 0; i < cap(errors); i++ {
-		if innerErr = <-errors; innerErr != nil {
-			err = innerErr
-		}
-	}
-
-	return err
+	return scatter(len(s.stmts), func(i int) error {
+		return s.stmts[i].Close()
+	})
 }
 
 // Exec executes a prepared statement with the given arguments
