@@ -18,8 +18,8 @@ func TestScatter(t *testing.T) {
 		return fmt.Errorf("%d is an odd fellow", seq[i])
 	})
 
-	if err.Error() != fmt.Sprintf("%d is an odd fellow", 7) {
-		t.Fatalf("Unexpected error: %s", err)
+	if err == nil {
+		t.Fatal("Expected error, got nil")
 	}
 
 	want := []int{1, 4, 3, 16, 5, 36, 7, 64}
