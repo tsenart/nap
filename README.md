@@ -1,4 +1,4 @@
-# Pan [![Build Status](https://drone.io/github.com/tsenart/pan/status.png)](https://drone.io/github.com/tsenart/pan/latest)
+# Pan [![Build Status](https://secure.travis-ci.org/tsenart/pan)](https://travis-ci.org/tsenart/pan)
 
 Pan is a library that abstracts access to master-slave physical SQL servers topologies as a single logical database mimicking the standard `sql.DB` APIs.
 
