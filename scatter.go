@@ -1,4 +1,4 @@
-package pan
+package nap
 
 func scatter(n int, fn func(i int) error) error {
 	errors := make(chan error, n)

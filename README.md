@@ -1,12 +1,10 @@
-# Pan [![Build Status](https://secure.travis-ci.org/tsenart/pan)](https://travis-ci.org/tsenart/pan)
+# Nap
 
-Pan is a library that abstracts access to master-slave physical SQL servers topologies as a single logical database mimicking the standard `sql.DB` APIs.
-
-![Pan](http://fc04.deviantart.net/fs71/f/2010/330/7/5/new_style_pan_by_artemis_aka_diana-d33mtrn.jpg)
+Nap is a library that abstracts access to master-slave physical SQL servers topologies as a single logical database mimicking the standard `sql.DB` APIs.
 
 ## Install
 ```shell
-$ go get github.com/tsenart/pan
+$ go get github.com/tsenart/nap
 ```
 
 ## Usage
@@ -16,7 +14,7 @@ package main
 import (
   "log"
 
-  "github.com/tsenart/pan"
+  "github.com/tsenart/nap"
   _ "github.com/go-sql-driver/mysql" // Any sql.DB works
 )
 
@@ -27,7 +25,7 @@ func main() {
   dsns += "tcp://user:password@slave01/dbname;"
   dsns += "tcp://user:password@slave02/dbname"
 
-  db, err := pan.Open("mysql", dsns)
+  db, err := nap.Open("mysql", dsns)
   if err != nil {
     log.Fatal(err)
   }
