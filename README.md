@@ -79,4 +79,4 @@ func main() {
 * Support other slave load balancing algorithms.
 
 ## License
-See [LICENSE](LICENSE.md)
+See [LICENSE](LICENSE)
