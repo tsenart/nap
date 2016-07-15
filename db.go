@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 // DB is a logical database with multiple underlying physical databases
@@ -118,6 +119,15 @@ func (db *DB) SetMaxIdleConns(n int) {
 func (db *DB) SetMaxOpenConns(n int) {
 	for i := range db.pdbs {
 		db.pdbs[i].SetMaxOpenConns(n)
+	}
+}
+
+// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+// Expired connections may be closed lazily before reuse.
+// If d <= 0, connections are reused forever.
+func (db *DB) SetConnMaxLifetime(d time.Duration) {
+	for i := range db.pdbs {
+		db.pdbs[i].SetConnMaxLifetime(d)
 	}
 }
 
