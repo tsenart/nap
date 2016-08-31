@@ -42,7 +42,7 @@ func (s *stmt) Exec(args ...interface{}) (sql.Result, error) {
 // Query uses a slave as the underlying physical db.
 func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
     if len(args) == 0 {
-        return s.stmts[s.db.slave(len(s.db.pdbs))].Query(query, args...)
+        return s.stmts[s.db.slave(len(s.db.pdbs))].Query(args...)
     }
     m, ok :=  args[len(args) - 1].(OnlyMaster)
     if ok && m == true {
@@ -61,7 +61,7 @@ func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
 // QueryRow uses a slave as the underlying physical db.
 func (s *stmt) QueryRow(args ...interface{}) *sql.Row {
     if len(args) == 0 {
-        return s.stmts[s.db.slave(len(s.db.pdbs))].QueryRow(query, args...)
+        return s.stmts[s.db.slave(len(s.db.pdbs))].QueryRow(args...)
     }
     m, ok :=  args[len(args) - 1].(OnlyMaster)
     if ok && m == true {
