@@ -5,7 +5,7 @@ import (
 	"database/sql/driver"
 	"strings"
 	"sync/atomic"
-	"time"
+    "time"
 )
 
 // DB is a logical database with multiple underlying physical databases
@@ -16,9 +16,12 @@ type DB struct {
 	count uint64    // Monotonically incrementing counter on each query
 }
 
+type OnlyMaster bool 
+
 // Open concurrently opens each underlying physical db.
 // dataSourceNames must be a semi-comma separated list of DSNs with the first
 // one being used as the master and the rest as slaves.
+// time duration allows for upper limit of wait for DB response
 func Open(driverName, dataSourceNames string) (*DB, error) {
 	conns := strings.Split(dataSourceNames, ";")
 	db := &DB{pdbs: make([]*sql.DB, len(conns))}
@@ -88,7 +91,13 @@ func (db *DB) Prepare(query string) (Stmt, error) {
 // The args are for any placeholder parameters in the query.
 // Query uses a slave as the physical db.
 func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return db.pdbs[db.slave(len(db.pdbs))].Query(query, args...)
+    m, ok :=  args[len(args) - 1].(OnlyMaster)
+    if ok && m == true {
+        args = args[0:len(args)-1]
+        return db.pdbs[0].Query(query, args...)
+    } else {
+	    return db.pdbs[db.slave(len(db.pdbs))].Query(query, args...)
+    }   
 }
 
 // QueryRow executes a query that is expected to return at most one row.
@@ -96,7 +105,13 @@ func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
 // Errors are deferred until Row's Scan method is called.
 // QueryRow uses a slave as the physical db.
 func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
-	return db.pdbs[db.slave(len(db.pdbs))].QueryRow(query, args...)
+    m, ok :=  args[len(args) - 1].(OnlyMaster)
+    if ok && m == true {
+        args = args[0:len(args)-1]
+        return db.pdbs[0].QueryRow(query, args...)
+    } else {
+	    return db.pdbs[db.slave(len(db.pdbs))].QueryRow(query, args...)
+    }
 }
 
 // SetMaxIdleConns sets the maximum number of connections in the idle

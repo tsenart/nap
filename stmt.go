@@ -2,6 +2,7 @@ package nap
 
 import (
 	"database/sql"
+    "time"
 )
 
 // Stmt is an aggregate prepared statement.
@@ -13,9 +14,12 @@ type Stmt interface {
 	QueryRow(...interface{}) *sql.Row
 }
 
+
+
 type stmt struct {
 	db    *DB
 	stmts []*sql.Stmt
+    timeout time.Duration
 }
 
 // Close closes the statement by concurrently closing all underlying
@@ -37,7 +41,13 @@ func (s *stmt) Exec(args ...interface{}) (sql.Result, error) {
 // arguments and returns the query results as a *sql.Rows.
 // Query uses a slave as the underlying physical db.
 func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
-	return s.stmts[s.db.slave(len(s.db.pdbs))].Query(args...)
+    m, ok :=  args[len(args) - 1].(OnlyMaster)
+    if ok && m == true {
+        args = args[0:len(args)-1]
+        return s.stmts[0].Query(args...)   
+    } else {
+	    return s.stmts[s.db.slave(len(s.db.pdbs))].Query(args...)
+    }
 }
 
 // QueryRow executes a prepared query statement with the given arguments.
@@ -47,5 +57,11 @@ func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
 // Otherwise, the *sql.Row's Scan scans the first selected row and discards the rest.
 // QueryRow uses a slave as the underlying physical db.
 func (s *stmt) QueryRow(args ...interface{}) *sql.Row {
-	return s.stmts[s.db.slave(len(s.db.pdbs))].QueryRow(args...)
+    m, ok :=  args[len(args) - 1].(OnlyMaster)
+    if ok && m == true {
+        args = args[0:len(args)-1]
+        return s.stmts[0].QueryRow(args...)
+    } else {
+        return s.stmts[s.db.slave(len(s.db.pdbs))].QueryRow(args...)
+    }
 }

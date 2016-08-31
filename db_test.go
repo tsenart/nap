@@ -24,6 +24,25 @@ func TestOpen(t *testing.T) {
 	}
 }
 
+
+func TestTimeout(t *testing.T) {
+	// https://www.sqlite.org/inmemorydb.html
+	db, err := Open("sqlite3", ":memory:;:memory:;:memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	if _, err = db.Exec("CREATE TABLE f( ert text)"); err != nil {
+		t.Error(err)
+	}
+    
+	if want, got := 3, len(db.pdbs); want != got {
+		t.Errorf("Unexpected number of physical dbs. Got: %d, Want: %d", got, want)
+	}
+}
+
+
 func TestClose(t *testing.T) {
 	db, err := Open("sqlite3", ":memory:;:memory:;:memory:")
 	if err != nil {
