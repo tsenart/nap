@@ -91,6 +91,9 @@ func (db *DB) Prepare(query string) (Stmt, error) {
 // The args are for any placeholder parameters in the query.
 // Query uses a slave as the physical db.
 func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+    if len(args) == 0 {
+        return db.pdbs[db.slave(len(db.pdbs))].Query(query, args...)
+    }
     m, ok :=  args[len(args) - 1].(OnlyMaster)
     if ok && m == true {
         args = args[0:len(args)-1]
@@ -105,6 +108,9 @@ func (db *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
 // Errors are deferred until Row's Scan method is called.
 // QueryRow uses a slave as the physical db.
 func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
+    if len(args) == 0 {
+        return db.pdbs[db.slave(len(db.pdbs))].QueryRow(query, args...)
+    }
     m, ok :=  args[len(args) - 1].(OnlyMaster)
     if ok && m == true {
         args = args[0:len(args)-1]

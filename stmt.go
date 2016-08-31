@@ -41,6 +41,9 @@ func (s *stmt) Exec(args ...interface{}) (sql.Result, error) {
 // arguments and returns the query results as a *sql.Rows.
 // Query uses a slave as the underlying physical db.
 func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
+    if len(args) == 0 {
+        return s.stmts[s.db.slave(len(s.db.pdbs))].Query(query, args...)
+    }
     m, ok :=  args[len(args) - 1].(OnlyMaster)
     if ok && m == true {
         args = args[0:len(args)-1]
@@ -57,6 +60,9 @@ func (s *stmt) Query(args ...interface{}) (*sql.Rows, error) {
 // Otherwise, the *sql.Row's Scan scans the first selected row and discards the rest.
 // QueryRow uses a slave as the underlying physical db.
 func (s *stmt) QueryRow(args ...interface{}) *sql.Row {
+    if len(args) == 0 {
+        return s.stmts[s.db.slave(len(s.db.pdbs))].QueryRow(query, args...)
+    }
     m, ok :=  args[len(args) - 1].(OnlyMaster)
     if ok && m == true {
         args = args[0:len(args)-1]
