@@ -136,6 +136,14 @@ func (db *DB) Slave() *sql.DB {
 	return db.pdbs[db.slave(len(db.pdbs))]
 }
 
+// Slaves returns the physical databases which are slaves
+func (db *DB) Slaves() []*sql.DB {
+	if len(db.pdbs) == 0 {
+		return nil
+	}
+	return db.pdbs[1:]
+}
+
 // Master returns the master physical database
 func (db *DB) Master() *sql.DB {
 	return db.pdbs[0]
