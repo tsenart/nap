@@ -19,7 +19,7 @@ func TestOpen(t *testing.T) {
 		t.Error(err)
 	}
 
-	if want, got := 3, len(db.pdbs); want != got {
+	if want, got := 3, len(db.Pdbs); want != got {
 		t.Errorf("Unexpected number of physical dbs. Got: %d, Want: %d", got, want)
 	}
 }
