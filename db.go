@@ -13,6 +13,7 @@ type SQLDB interface {
 	Close() error
 	Driver() driver.Driver
 	Begin() (*sql.Tx, error)
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	Ping() error
@@ -70,6 +71,11 @@ func (db *DB) Driver() driver.Driver {
 // Begin starts a transaction on the master. The isolation level is dependent on the driver.
 func (db *DB) Begin() (*sql.Tx, error) {
 	return db.Pdbs[0].Begin()
+}
+
+// Begin starts a transaction on the master. The isolation level is dependent on the driver.
+func (db *DB) BeginTX(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	return db.Pdbs[0].BeginTx(ctx, opts)
 }
 
 // Exec executes a query without returning any rows.
