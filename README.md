@@ -2,6 +2,8 @@
 
 Nap is a library that abstracts access to master-slave physical SQL servers topologies as a single logical database mimicking the standard `sql.DB` APIs.
 
+Nap requires Go version 1.8 or greater.
+
 ## Install
 ```shell
 $ go get github.com/tsenart/nap
