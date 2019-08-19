@@ -13,8 +13,9 @@ import (
 // forming a single master multiple slaves topology.
 // Reads and writes are automatically directed to the correct physical db.
 type DB struct {
-	pdbs  []*sql.DB // Physical databases
-	count uint64    // Monotonically incrementing counter on each query
+	pdbs       []*sql.DB // Physical databases
+	count      uint64    // Monotonically incrementing counter on each query
+	queryRowDB func(query string, args ...interface{}) *sql.DB
 }
 
 // Open concurrently opens each underlying physical db.
@@ -147,7 +148,12 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{
 // Errors are deferred until Row's Scan method is called.
 // QueryRow uses a slave as the physical db.
 func (db *DB) QueryRow(query string, args ...interface{}) *sql.Row {
-	return db.Slave().QueryRow(query, args...)
+	d := db.Slave() // default to slave
+	if db.queryRowDB != nil {
+		// conditional function that decide what db to use
+		d = db.queryRowDB(query, args)
+	}
+	return d.QueryRow(query, args...)
 }
 
 // QueryRowContext executes a query that is expected to return at most one row.
@@ -205,4 +211,8 @@ func (db *DB) slave(n int) int {
 		return 0
 	}
 	return int(1 + (atomic.AddUint64(&db.count, 1) % uint64(n-1)))
+}
+
+func (db *DB) SetQueryRowDB(fn func(query string, args ...interface{}) *sql.DB) {
+	db.queryRowDB = fn
 }
