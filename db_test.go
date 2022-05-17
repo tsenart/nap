@@ -9,7 +9,7 @@ import (
 
 func TestOpen(t *testing.T) {
 	// https://www.sqlite.org/inmemorydb.html
-	db, err := Open("sqlite3", ":memory:;:memory:;:memory:")
+	db, err := Open("sqlite3", ":memory:;:memory:;:memory:", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,7 +25,7 @@ func TestOpen(t *testing.T) {
 }
 
 func TestClose(t *testing.T) {
-	db, err := Open("sqlite3", ":memory:;:memory:;:memory:")
+	db, err := Open("sqlite3", ":memory:;:memory:;:memory:", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

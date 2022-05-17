@@ -7,6 +7,9 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/go-sql-driver/mysql"
+	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 )
 
 // DB is a logical database with multiple underlying physical databases
@@ -20,12 +23,18 @@ type DB struct {
 // Open concurrently opens each underlying physical db.
 // dataSourceNames must be a semi-comma separated list of DSNs with the first
 // one being used as the master and the rest as slaves.
-func Open(driverName, dataSourceNames string) (*DB, error) {
+func Open(driverName, dataSourceNames string, driver driver.Driver) (*DB, error) {
+	if driver == nil {
+		driver = mysql.MySQLDriver{}
+	}
+	// The first step is to register the driver that we will be using.
+	sqltrace.Register(driverName, driver)
+
 	conns := strings.Split(dataSourceNames, ";")
 	db := &DB{pdbs: make([]*sql.DB, len(conns))}
 
 	err := scatter(len(db.pdbs), func(i int) (err error) {
-		db.pdbs[i], err = sql.Open(driverName, conns[i])
+		db.pdbs[i], err = sqltrace.Open(driverName, conns[i])
 		return err
 	})
 
