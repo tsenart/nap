@@ -23,12 +23,15 @@ type DB struct {
 // Open concurrently opens each underlying physical db.
 // dataSourceNames must be a semi-comma separated list of DSNs with the first
 // one being used as the master and the rest as slaves.
-func Open(driverName, dataSourceNames string, driver driver.Driver) (*DB, error) {
+func Open(driverName, dataSourceNames string, driver driver.Driver, serviceName string) (*DB, error) {
 	if driver == nil {
 		driver = mysql.MySQLDriver{}
 	}
+	if serviceName == "" {
+		serviceName = driverName
+	}
 	// The first step is to register the driver that we will be using.
-	sqltrace.Register(driverName, driver)
+	sqltrace.Register(driverName, driver, sqltrace.WithServiceName(serviceName))
 
 	conns := strings.Split(dataSourceNames, ";")
 	db := &DB{pdbs: make([]*sql.DB, len(conns))}
